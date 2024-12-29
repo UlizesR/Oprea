@@ -50,6 +50,11 @@ typedef struct Curve2
     // Torsion in 2D (normally zero)
     double *tau;     
 
+    // min/max of the curve
+    double d_minX, d_maxX, d_minY, d_maxY;
+    // int minx, maxx, miny, maxy;
+    int i_minX, i_maxX, i_minY, i_maxY;
+
 } Curve2;
 
 /**
@@ -68,6 +73,12 @@ void InitCurve2(
 
 /** Frees all allocated arrays in the curve. */
 void FreeCurve2(Curve2 *curve);
+
+void computeMinMax(const Curve2* curve, double* minX, double* maxX, double* minY, double* maxY);
+
+void curvatureToColor(double k, double kMin, double kMax, float *r, float *g, float *b);
+
+void computeCurvatureRange(const Curve2* curve, double* kMin, double* kMax);
 
 #ifdef __cplusplus
 }

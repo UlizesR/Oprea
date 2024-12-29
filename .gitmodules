@@ -1,0 +1,3 @@
+[submodule "external/CPlotLib"]
+	path = external/CPlotLib
+	url = https://github.com/TheQuaternionGroup/CPlotLib.git
