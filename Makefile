@@ -1,15 +1,13 @@
-CC:=gcc
-
-SRC_DIR:=src
-Build_DIR:=binCC := gcc
+CC := gcc
 SRC_DIR := src
 BUILD_DIR := bin
 TEST_DIR := test
 INCLUDE_DIR := include
 
 # External library paths
-CPLOTLIB_INCLUDE := external/CPlotLib/include
-CPLOTLIB_LIB := external/CPlotLib/lib
+CPLOTLIB_DIR := external/CPlotLib
+CPLOTLIB_INCLUDE := $(CPLOTLIB_DIR)/include
+CPLOTLIB_LIB := $(CPLOTLIB_DIR)/lib
 
 # Get pkg-config flags for GLEW and GLFW3
 PKG_LIBS := $(shell pkg-config --libs glew glfw3)
@@ -32,17 +30,17 @@ all: $(BUILD_DIR)/test1
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-# Build the test
-$(BUILD_DIR)/test1: $(TEST_DIR)/2D_Curves.c $(SRCS) | $(BUILD_DIR)
-	$(CC) $^ -o $@ $(CFLAGS) $(LDFLAGS)
+# Build CPlotLib first
+$(CPLOTLIB_LIB)/libcpl.a:
+	$(MAKE) -C $(CPLOTLIB_DIR)
+
+# Build the test (now depends on CPlotLib)
+$(BUILD_DIR)/test1: $(CPLOTLIB_LIB)/libcpl.a $(TEST_DIR)/2D_Curves.c $(SRCS) | $(BUILD_DIR)
+	$(CC) $(TEST_DIR)/2D_Curves.c $(SRCS) -o $@ $(CFLAGS) $(LDFLAGS)
 
 # Clean build files 
 clean:
 	rm -rf $(BUILD_DIR)
+	$(MAKE) -C $(CPLOTLIB_DIR) clean
 
 .PHONY: all clean
-TEST_DIR:=test
-
-SRCS:=$(wildcard $(SRC_DIR)/*.c)
-TEST_SRCS:=$(wildcard $(TEST_DIR)/*.c)
-

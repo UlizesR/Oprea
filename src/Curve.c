@@ -167,32 +167,26 @@ void computeMinMax(const Curve2 *curve, double *minX, double *maxX, double *minY
     }
 }
 
-void curvatureToColor(double k, double kMin, double kMax, float *r, float *g, float *b) 
+void curvatureToColor(double k, double kMin, double kMax, float *r, float *g, float *b)
 {
-    if (kMax - kMin < 1e-14) 
-    {
-        *r = 0;
-        *g = 1;
-        *b = 0; // fallback => green
-        return;
-    }
+    // clamp k to [kMin, kMax]
     double t = (k - kMin) / (kMax - kMin);
-    if (t < 0)
-        t = 0;
-    if (t > 1)
-        t = 1;
+    t = fmax(0.0, fmin(1.0, t));
 
-    if (t < 0.5) 
+    // 0 => green (0,1,0), 0.5 => yellow (1,1,0), 1 => red (1,0,0)
+    if (t < 0.5)
     {
         float u = (float)(t / 0.5);
-        *r = u;
-        *g = 1.0f;
-        *b = 0.f;
-    } else {
+        *r = u;       // 0->1
+        *g = 1.0f;    // 1
+        *b = 0.0f;
+    }
+    else
+    {
         float u = (float)((t - 0.5) / 0.5);
-        *r = 1.f;
-        *g = 1.f - u;
-        *b = 0.f;
+        *r = 1.0f;
+        *g = 1.0f - u; 
+        *b = 0.0f;
     }
 }
 

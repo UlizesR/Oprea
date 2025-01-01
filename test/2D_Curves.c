@@ -1,20 +1,11 @@
 #include <math.h> // Include math.h for cos and sin functions
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "Oprea.h"
 #include "CPlotLib.h"
 
 // Parametric function
-static double spiral_x(double t) { return t * cos(t); }
-static double spiral_y(double t) { return t * sin(t); }
-
-static double spiral_dx(double t) { return cos(t) - t * sin(t); }
-static double spiral_dy(double t) { return sin(t) + t * cos(t); }
-
-static double spiral_d2x(double t) { return -2 * sin(t) - t * cos(t); }
-static double spiral_d2y(double t) { return 2 * cos(t) - t * sin(t); }
-
-static double circle_x(double t) { return cos(t); }
-static double circle_y(double t) { return sin(t); }
 
 static double f_x(double t) { return cos(t)*sin(4*t); }
 static double f_y(double t) { return sin(t)*sin(4*t); }
@@ -35,6 +26,7 @@ static double d2f_y(double t)
 {
     return -17.0* sin(t)*sin(4*t) + 8.0*cos(t)*cos(4*t);
 }
+
 static double d3f_x(double t){ return 0.0; }
 static double d3f_y(double t){ return 0.0; }
 
@@ -56,6 +48,7 @@ static Color CurvatureColorFn(double t, void* userData)
     int i = (int)(alpha * (curve->num_pts - 1));
     if (i < 0) i=0;
     if (i >= (int)curve->num_pts) i = curve->num_pts - 1;
+
 
     double k = curve->kappa[i];
     double kMin, kMax;
@@ -80,68 +73,62 @@ Color RainbowColor(double t, void* userData)
 
 int main(void)
 {
-    Figure* fig = CreateFigure(800,600,"2D Curve Plot");
-    if(!fig) return -1;
 
     double domain[2] = {0.0, 2.0*M_PI};
     FuncVec2 f   = { f_x,  f_y };
     FuncVec2 df  = { df_x, df_y };
     FuncVec2 d2f = { d2f_x,d2f_y};
-    FuncVec2 d3f = { d3f_x,d3f_y};
 
     // FuncVec2 f   = { spiral_x,  spiral_y };
     // FuncVec2 df  = { spiral_dx, spiral_dy };
     // FuncVec2 d2f = { spiral_d2x,spiral_d2y};
 
+    FuncVec2 d3f = { d3f_x,d3f_y};
+
     Curve2 curve;
     InitCurve2(&curve,&f,&df,&d2f,&d3f,300,domain);
 
-    // 1) Plot a parametric curve with a color callback
-    PlotParam2D(
-        fig,      // figure
-        f_x,      // x(t)
-        f_y,      // y(t)
-        0.0,      // tMin
-        2.0*M_PI, // tMax
-        300,      // numSamples
-        COLOR_WHITE,          // fallback line color
-        RainbowColor,     // pass in your callback
-        (void*)&curve         // pass in your data
-    );
-
-    // PlotParam2D(
-    //     fig,      // figure
-    //     spiral_x, // x(t)
-    //     spiral_y, // y(t)
-    //     0.0,      // tMin
-    //     2.0*M_PI, // tMax
-    //     300,      // numSamples
-    //     COLOR_WHITE,          // fallback line color
-    //     CurvatureColorFn,     // pass in your callback
-    //     (void*)&curve         // pass in your data
-    // );
-
-    // 2) Plot another param with a color callback
-    //    e.g., circle with rainbow
-    // PlotParam2D(fig, circle_x, circle_y, 0.0, 2.0 * M_PI, 200, COLOR_GREEN, RainbowColor);
-
-    int count = 5;
-    double xTicks[count];
-    double yTicks[count];
-
-
-    for(int i = 0; i < count; i++)
-    {
-        xTicks[i] = curve.i_minX + i*(curve.i_maxX - curve.i_minX) * (1.0 / (count-1));
-        yTicks[i] = curve.i_minY + i*(curve.i_maxY - curve.i_minY) * (1.0 / (count-1));
+    // Create a figure with specified width and height
+    CPLFigure* fig = CreateFigure(800, 600);
+    if (!fig) {
+        fprintf(stderr, "Failed to create figure.\n");
+        return EXIT_FAILURE;
     }
 
-    // We want 5 ticks each
-    SetXaxis(fig,xTicks,5);
-    SetYaxis(fig,yTicks,5);
+    // set fig bg color to dark gray
+    Color darkGray = {0.2f, 0.2f, 0.2f, 1.0f};
+    fig->bg_color = darkGray;
 
-    // 4) Show the figure
-    ShowPlot(fig);
+    // Add a single plot to the figure
+    CPLPlot* plot = AddPlot(fig);
+    if (!plot) {
+        fprintf(stderr, "Failed to add plot to figure.\n");
+        FreeFigure(fig); 
+        return EXIT_FAILURE;
+    }
+
+    // Set X and Y ranges
+    double x_range[2] = { -1.0, 1.0 };
+    double y_range[2] = { -1.0, 1.0 };
+    SetXRange(plot, x_range);  
+    SetYRange(plot, y_range);  
+
+    // Prepare data
+    size_t num_points = 300;
+    double x[300];
+    double y[300];
+
+    // Fill data
+    for (size_t i = 0; i < num_points; ++i) {
+        // map i to [0..2π]
+        double t = domain[0] + i * (domain[1] - domain[0]) / (num_points - 1);
+        x[i] = f_x(t);
+        y[i] = f_y(t);
+    }
+
+    Plot(plot, x, y, num_points, COLOR_GREEN, NULL, NULL);
+
+    ShowFigure(fig);
 
     // 5) Clean up
     FreeCurve2(&curve);
